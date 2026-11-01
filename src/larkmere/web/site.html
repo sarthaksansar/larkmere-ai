@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Larkmere AI Demo</title>
+<style>
+:root {
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --soft:#52514e; --muted:#6f6d68; --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --good:#006300; --bad:#c22f2f; --warnbg:#fbeaea; --goodbg:#e9f5e9;
+  --heat-0:#f0efec; --heat-rgb:42,120,214;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --soft:#c3c2b7; --muted:#a3a198; --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --good:#0ca30c; --bad:#e66767; --warnbg:#3a1f1f; --goodbg:#1b2e1b;
+    --heat-0:#383835; --heat-rgb:57,135,229;
+  }
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--page); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+main { max-width:1120px; margin:0 auto; padding:28px 16px 80px; }
+h1 { font-size:30px; line-height:1.2; margin:6px 0 8px; letter-spacing:-.01em; }
+h2 { font-size:22px; margin:44px 0 4px; }
+h3 { font-size:15px; margin:0 0 2px; }
+p { margin:0 0 10px; }
+.eyebrow { color:var(--soft); font-size:13px; }
+.lede { font-size:17px; color:var(--soft); max-width:780px; }
+.sub { color:var(--soft); margin-bottom:14px; max-width:780px; }
+nav { display:flex; gap:14px; flex-wrap:wrap; margin:14px 0 8px; font-size:14px; }
+nav a { color:var(--ink); }
+.card { background:var(--surface); border:1px solid var(--ring); border-radius:10px; padding:16px; margin-bottom:14px; min-width:0; }
+.grid2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.tiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
+@media (max-width:640px) { .tiles { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.tile { background:var(--surface); border:1px solid var(--ring); border-radius:10px; padding:12px 14px; }
+.tile b { display:block; font-size:24px; font-weight:600; line-height:1.25; }
+.tile span { font-size:13px; color:var(--soft); }
+@media (max-width:800px) { .grid2 { grid-template-columns:minmax(0,1fr); } }
+table { border-collapse:collapse; width:100%; font-size:14px; }
+th { text-align:left; font-weight:600; color:var(--soft); }
+th,td { padding:6px 8px; border-bottom:1px solid var(--grid); vertical-align:top; }
+td.num,th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.wide { overflow-x:auto; }
+.pill { display:inline-block; font-size:12px; padding:1px 8px; border-radius:99px; white-space:nowrap; }
+.pill.ok { background:var(--goodbg); color:var(--good); }
+.pill.no { background:var(--warnbg); color:var(--bad); }
+.small { font-size:13px; color:var(--soft); }
+.fail { color:var(--bad); font-size:13px; margin-top:3px; }
+.filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; position:sticky; top:0; padding:10px 0; background:var(--page); z-index:2; }
+select,button { font:inherit; color:inherit; background:var(--surface); border:1px solid var(--axis); border-radius:6px; padding:5px 10px; }
+button { cursor:pointer; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--soft); margin:4px 0 6px; }
+.swatch { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; }
+.chart { position:relative; }
+svg { display:block; width:100%; height:auto; }
+.tick { fill:var(--muted); font-size:11px; font-variant-numeric:tabular-nums; }
+#tip { position:fixed; pointer-events:none; background:var(--surface); border:1px solid var(--axis); border-radius:6px; padding:6px 9px; font-size:13px; display:none; z-index:5; max-width:280px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+.toggle { margin-top:8px; font-size:13px; padding:3px 8px; }
+.steps { max-height:430px; overflow:auto; border:1px solid var(--grid); border-radius:6px; }
+.steps button { display:block; width:100%; text-align:left; border:0; border-bottom:1px solid var(--grid); border-radius:0; background:transparent; font-size:13px; padding:5px 8px; }
+.steps button[aria-current=true] { background:color-mix(in srgb,var(--s1) 18%,transparent); }
+.frame img { width:100%; border:1px solid var(--ring); border-radius:6px; display:block; }
+.robotgrid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:14px; }
+@media (max-width:800px) { .robotgrid { grid-template-columns:minmax(0,1fr); } }
+.stop { border-left:4px solid var(--bad); }
+.heat td { text-align:center; font-variant-numeric:tabular-nums; border:2px solid var(--surface); }
+pre.note { white-space:pre-wrap; font:13px/1.5 system-ui,sans-serif; margin:6px 0; background:var(--page); padding:8px; border-radius:6px; }
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">A portfolio project. Larkmere AI, its customers, staff, products, prices and history are all invented.</div>
+<h1>Automating a system with no API, without trusting what reads it</h1>
+<p class="lede">A deployment engineer's toolkit, built around a fictional company selling model API access. This page is one real run of it.</p>
+<nav><a href="#robot">Screen automation</a><a href="#checks">Hard checks</a><a href="#notes">Reviewed notes</a><a href="#revenue">Revenue</a><a href="#honest">What is and isn't AI</a></nav>
+<div id="mode" class="card"></div>
+
+<section id="robot">
+  <h2>Screen automation with safe stops</h2>
+  <p class="sub">The demo CRM has no API, so the robot works from screenshots. Before each action it reads the screen with OCR and confirms the app, the screen, and that this is the demo environment. If any of that is off, it stops and sends nothing.</p>
+  <div id="safety"></div>
+  <div class="robotgrid"><div class="steps" id="steps"></div><div class="frame" id="frame"></div></div>
+</section>
+
+<section id="checks">
+  <h2>Extraction with hard checks</h2>
+  <p class="sub">Statements captured from the screen become structured data. Then plain code recomputes every line and total. It never corrects a figure: a statement passes everything or goes to a person.</p>
+  <div class="card wide" id="checktable"></div>
+</section>
+
+<section id="notes">
+  <h2>Reviewed notes</h2>
+  <p class="sub">Transcripts imported from Microsoft Teams and Granola formats become draft notes. Nothing reaches the CRM until a named person approves it, and then the robot types it, reads it back and saves it.</p>
+  <div id="reviews"></div>
+</section>
+
+<section id="revenue">
+  <h2>Revenue analytics</h2>
+  <p class="sub">Standard metrics for a usage-based API business, from a seeded generator. Revenue here means what was billed: the greater of commit and usage, in the month shown.</p>
+  <div class="filters">
+    <label>Segment <select id="segment"></select></label>
+    <label>Period <select id="range"><option value="33">All months</option><option value="24">Last 24 months</option><option value="12">Last 12 months</option></select></label>
+  </div>
+  <div class="tiles" id="tiles"></div>
+  <div class="grid2">
+    <div class="card"><h3>What moved revenue each month</h3><div class="small">New, expansion, contraction and churn against the month before</div><div id="c-bridge"></div></div>
+    <div class="card"><h3>Committed revenue and everything above it</h3><div class="small">Commit is contracted. Overage and pay-as-you-go are not.</div><div id="c-commit"></div></div>
+    <div class="card"><h3>Token consumption by model tier</h3><div class="small">Billions of tokens, input and output together</div><div id="c-tokens"></div></div>
+    <div class="card"><h3>Usage value by model tier</h3><div class="small">Share of list-price usage. Compare with tokens: cheap tiers carry volume, not revenue.</div><div id="c-mix"></div></div>
+  </div>
+  <div class="card"><h3>Movement between model tiers</h3><div class="small" id="movement-sub"></div><div class="wide" id="c-movement"></div></div>
+  <div class="grid2">
+    <div class="card"><h3>Commit conversations to have</h3><div class="small" id="upsell-rule"></div><div class="wide" id="upsell"></div></div>
+    <div class="card"><h3>Commits at risk at renewal</h3><div class="small" id="risk-rule"></div><div class="wide" id="risk"></div></div>
+  </div>
+</section>
+
+<section id="honest">
+  <h2>What is and isn't AI</h2>
+  <div class="card wide"><table>
+    <tr><th>Step</th><th>How it works</th></tr>
+    <tr><td>Reading the screen</td><td>A local OCR engine (a small neural network, no cloud). Its output is treated as untrusted text.</td></tr>
+    <tr><td>Deciding where the robot is, and whether to act</td><td>Rules only. No model is ever asked whether it's safe to click.</td></tr>
+    <tr><td>Structuring a statement</td><td id="h-extract"></td></tr>
+    <tr><td>Checking the figures</td><td>Arithmetic only.</td></tr>
+    <tr><td>Drafting a note</td><td id="h-draft"></td></tr>
+    <tr><td>Checking a note's facts</td><td>Rules only: figures, dates, names and citations must match the transcript.</td></tr>
+    <tr><td>Approving a note</td><td>A person.</td></tr>
+    <tr><td>Revenue metrics</td><td>Arithmetic on seeded data.</td></tr>
+  </table></div>
+</section>
+</main>
+<div id="tip" role="status"></div>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const M = DATA.metrics, R = DATA.results, T = DATA.trace;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const usd = c => { const v = Math.abs(c) / 100, sign = c < 0 ? "-" : "";
+  if (v >= 1e6) return `${sign}$${(v / 1e6).toFixed(2)}M`;
+  if (v >= 1e3) return `${sign}$${(v / 1e3).toFixed(v >= 1e4 ? 0 : 1)}k`;
+  return `${sign}$${v.toFixed(0)}`; };
+const pct = v => v == null ? "n/a" : `${(v * 100).toFixed(0)}%`;
+const usable = R.results && R.results.length > 0;
+
+/* ---------- run description ---------- */
+$("mode").innerHTML = `<h3>What produced this run</h3>
+  <div class="small">Statement extraction: <b>${esc(R.extractor)}</b>. Note drafting: <b>${esc(R.drafter)}</b>.
+  ${{offline: "This run used the rule-based stand-ins, so no AI wrote or read anything except the local OCR. The versions that use Claude go through exactly the same checks.",
+     replay: "The robot and every check ran for real. Claude's answers are played back from a recorded real run, so the demo needs no key. Its statement figures came from that run's screenshots, not this one's.",
+     record: "Claude read the statements and drafted the notes live in this run, and its answers went through the same checks as anything else.",
+     live: "Claude read the statements and drafted the notes live in this run, and its answers went through the same checks as anything else."}[R.mode] || ""}</div>`;
+$("h-extract").textContent = R.extractor + (R.mode === "offline" ? ". An extractor using the Claude API, with the same output format, is included for live runs." : ".");
+$("h-draft").textContent = R.drafter + (R.mode === "offline" ? ". A drafter using the Claude API, with the same output format, is included for live runs." : ".");
+
+/* ---------- robot ---------- */
+if (R.safety) {
+  const s = R.safety;
+  const shot = (T.incidents.find(i => i.frame) || {}).frame;
+  $("safety").innerHTML = `<div class="card stop"><h3>${s.stopped ? "It stopped, as it should" : "It did not stop"}: ${esc(s.scenario)}</h3>
+    <p>${esc(s.reason)}</p>
+    <p class="small">Clicks and keystrokes sent after the window appeared: <b>${s.inputs_sent_after_it_appeared}</b>.
+    The run then carried on once the look-alike was closed.${shot ? ` <a href="frames/${shot}">See what the robot saw</a>.` : ""}</p></div>`;
+}
+function showStep(i) {
+  const s = T.steps[i];
+  [...$("steps").children].forEach((b, n) => b.setAttribute("aria-current", n === i));
+  $("frame").innerHTML = s.frame
+    ? `<img src="frames/${s.frame}" alt="What the robot saw before: ${esc(s.action)}"><div class="small">Before "${esc(s.action)}". Blue boxes mark everything OCR read.</div>`
+    : `<div class="small">No frame saved for this step.</div>`;
+}
+if (T.steps.length) {
+  $("steps").innerHTML = T.steps.map((s, i) => `<button onclick="showStep(${i})">${s.n}. ${esc(s.action)}</button>`).join("");
+  const statementPage = T.steps.findIndex(s => /page 2 of 2/.test(s.action));
+  showStep(statementPage >= 0 ? statementPage : 0);
+} else {
+  $("steps").innerHTML = `<div class="small" style="padding:8px">The robot did not run this time.</div>`;
+}
+
+/* ---------- checks ---------- */
+if (usable) {
+  $("checktable").innerHTML = `<table><tr><th>Account</th><th>Case</th><th>Checks passed</th><th>Result</th></tr>` +
+    R.results.map(r => {
+      const failed = r.checks.filter(c => !c.ok);
+      return `<tr><td>${esc(r.account_id)}<div class="small">${esc(r.name)}</div></td>
+        <td>${esc(r.fault_injected ? "Injected: " + r.fault_injected : r.purpose)}${failed.map(f => `<div class="fail">${esc(f.name)}: ${esc(f.detail)}</div>`).join("")}</td>
+        <td class="num">${r.checks.length - failed.length} of ${r.checks.length}</td>
+        <td><span class="pill ${r.verdict === "verified" ? "ok" : "no"}">${r.verdict === "verified" ? "Verified" : "Quarantined"}</span></td></tr>`;
+    }).join("") + `</table>`;
+} else {
+  $("checktable").innerHTML = `<div class="small">The robot did not run, so no statements were captured.</div>`;
+}
+
+/* ---------- notes ---------- */
+$("reviews").innerHTML = `<div class="grid2">` + R.reviews.map(d => {
+  const decision = d.decision || {};
+  const saved = (R.notes_saved || []).find(n => n.draft_id === d.draft_id);
+  return `<div class="card"><h3>${esc(d.meeting)}</h3>
+    <div class="small">${esc(d.account_id)}. From: ${esc(d.transcript_source)}. Drafted by ${esc(d.source)}.</div>
+    ${d.fault_injected ? `<div class="small">Demo fault added on purpose: it ${esc(d.fault_injected)}.</div>` : ""}
+    <pre class="note">${esc(decision.final_text || d.text)}</pre>
+    ${d.flags.map(f => `<div class="fail">&#9888; ${esc(f)}</div>`).join("")}
+    ${d.injection_lines.length ? `<div class="small">Transcript line ${d.injection_lines.join(", ")} tried to instruct an AI. It was not acted on.</div>` : ""}
+    <p style="margin-top:8px"><span class="pill ${decision.decision === "approved" ? "ok" : "no"}">${decision.decision === "approved" ? "Approved" : "Rejected"}</span>
+    <span class="small"> by ${esc(decision.reviewer)}.${saved ? ` Typed into the CRM and read back at ${(saved.readback * 100).toFixed(0)}% match.` : ""}</span></p></div>`;
+}).join("") + `</div><p class="small">Notes found in the CRM database after the run, checked separately from the robot: ${(R.notes_in_crm || []).length}.</p>`;
+
+/* ---------- charts ---------- */
+const tip = $("tip");
+function showTip(event, html) { tip.innerHTML = html; tip.style.display = "block";
+  const x = Math.min(event.clientX + 14, innerWidth - tip.offsetWidth - 8), y = Math.max(8, event.clientY - tip.offsetHeight - 10);
+  tip.style.left = x + "px"; tip.style.top = y + "px"; }
+const hideTip = () => { tip.style.display = "none"; };
+
+function niceMax(v) { const p = 10 ** Math.floor(Math.log10(v || 1)); for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; }
+
+/* Stacked columns, with negative values stacking below zero. */
+function stacked(target, rows, series, format, {events = [], share = false} = {}) {
+  const W = 520, H = 250, L = 52, Rt = 8, Tp = 14, B = 26;
+  const sum = (r, sign) => series.reduce((a, s) => a + (sign * r[s.key] > 0 ? r[s.key] : 0), 0);
+  const top = share ? 1 : niceMax(Math.max(...rows.map(r => sum(r, 1)), 0));
+  const low = share ? 0 : -niceMax(Math.max(...rows.map(r => -sum(r, -1)), 0) || 0) * (rows.some(r => sum(r, -1) < 0) ? 1 : 0);
+  const y = v => Tp + (top - v) / (top - low || 1) * (H - Tp - B);
+  const band = (W - L - Rt) / rows.length, bar = Math.max(2, band - 2);
+  let svg = "";
+  const ticks = low < 0 ? [low, low / 2, 0, top / 2, top] : [0, top / 2, top];
+  for (const t of ticks) svg += `<line x1="${L}" x2="${W - Rt}" y1="${y(t)}" y2="${y(t)}" stroke="var(${t === 0 ? "--axis" : "--grid"})"/><text class="tick" x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${format(t)}</text>`;
+  rows.forEach((r, i) => {
+    const x = L + i * band + 1; let up = 0, down = 0;
+    series.forEach(s => {
+      const v = r[s.key]; if (!v) return;
+      const start = v > 0 ? up : down, end = start + v;
+      if (v > 0) up = end; else down = end;
+      const a = y(Math.max(start, end)), h = Math.abs(y(start) - y(end));
+      svg += `<rect x="${x}" y="${a}" width="${bar}" height="${Math.max(h - 1, .5)}" rx="1" style="fill:var(${s.color})"/>`;
+    });
+    svg += `<rect data-i="${i}" x="${x - 1}" y="${Tp}" width="${band}" height="${H - Tp - B}" fill="transparent"/>`;
+    if (i % Math.ceil(rows.length / 6) === 0) svg += `<text class="tick" x="${x + bar / 2}" y="${H - 8}" text-anchor="middle">${r.month}</text>`;
+  });
+  for (const e of events) { const i = rows.findIndex(r => r.month === e.month); if (i < 0) continue;
+    const x = L + i * band; svg += `<line x1="${x}" x2="${x}" y1="${Tp - 8}" y2="${H - B}" stroke="var(--soft)"/><text class="tick" x="${x + 3}" y="${Tp - 2}">${e.label.split(":")[0]}</text>`; }
+  const legend = series.map(s => `<span><span class="swatch" style="background:var(${s.color})"></span>${s.label}</span>`).join("");
+  const id = target + "-t";
+  const table = `<div class="wide" id="${id}" hidden><table><tr><th>Month</th>${series.map(s => `<th class="num">${s.label}</th>`).join("")}</tr>` +
+    rows.slice().reverse().map(r => `<tr><td>${r.month}</td>${series.map(s => `<td class="num">${format(r[s.key])}</td>`).join("")}</tr>`).join("") + `</table></div>`;
+  const el = $(target);
+  el.innerHTML = `<div class="legend">${legend}</div><div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${series.map(s => s.label).join(", ")} by month">${svg}</svg></div>
+    <button class="toggle" onclick="const t=$('${id}');t.hidden=!t.hidden;this.textContent=t.hidden?'Show as table':'Hide table'">Show as table</button>${table}`;
+  el.querySelectorAll("rect[data-i]").forEach(rect => {
+    const r = rows[+rect.dataset.i];
+    rect.addEventListener("mousemove", e => showTip(e, `<b>${r.month}</b><br>` + series.map(s => `<span class="swatch" style="background:var(${s.color})"></span>${s.label}: ${format(r[s.key])}`).join("<br>")));
+    rect.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function matrix(move) {
+  // "Not a customer" is only ever a starting point, and "Churned" only ever an end point.
+  const from = move.labels.filter(l => l !== "Churned"), to = move.labels.filter(l => l !== "Not a customer");
+  const top = Math.max(...from.flatMap(a => to.map(b => move.matrix[a][b])), 1);
+  $("movement-sub").textContent = `Customers by the tier they spend most on: ${move.start} (rows) to ${move.end} (columns). Darker means more customers.`;
+  $("c-movement").innerHTML = `<table class="heat"><tr><th>From \\ To</th>${to.map(l => `<th style="text-align:center">${l}</th>`).join("")}</tr>` +
+    from.map(a => `<tr><th>${a}</th>${to.map(b => {
+      const v = move.matrix[a][b], alpha = v ? .12 + .7 * v / top : 0;
+      return `<td style="background:${v ? `rgba(var(--heat-rgb),${alpha.toFixed(2)})` : "transparent"}">${v || "&middot;"}</td>`;
+    }).join("")}</tr>`).join("") + `</table>`;
+}
+
+function accountTable(target, rows, columns) {
+  $(target).innerHTML = rows.length
+    ? `<table><tr><th>Account</th>${columns.map(c => `<th class="num">${c[0]}</th>`).join("")}</tr>` +
+      rows.map(r => `<tr><td>${esc(r.name)}<div class="small">${esc(r.id)}, ${esc(r.owner)}</div></td>${columns.map(c => `<td class="num">${usd(r[c[1]])}</td>`).join("")}</tr>`).join("") + `</table>`
+    : `<div class="small">None this month.</div>`;
+}
+
+const segmentSelect = $("segment");
+segmentSelect.innerHTML = Object.keys(M.segments).map(s => `<option>${s}</option>`).join("");
+
+function render() {
+  const seg = M.segments[segmentSelect.value], n = +$("range").value;
+  const k = seg.kpis, r = seg.retention;
+  const tiles = [
+    [usd(k.revenue), `Revenue, ${M.as_of}`],
+    [k.revenue_growth == null ? "n/a" : `${k.revenue_growth >= 0 ? "+" : ""}${pct(k.revenue_growth)}`, "Revenue, year on year"],
+    [k.customers, "Paying customers"],
+    [pct(r.nrr), "Net revenue retention, 12 months"],
+    [pct(r.grr), "Gross revenue retention, 12 months"],
+    [pct(r.logo), `Customers kept, of ${r.cohort}`],
+    [pct(k.overage_share), "Revenue above commit"],
+    [pct(k.commit_utilisation), "Commit used, on commit accounts"],
+  ];
+  $("tiles").innerHTML = tiles.map(t => `<div class="tile"><b>${t[0]}</b><span>${t[1]}</span></div>`).join("");
+  const last = rows => rows.slice(-n);
+  stacked("c-bridge", last(seg.bridge), [
+    {key: "new", label: "New", color: "--s1"}, {key: "expansion", label: "Expansion", color: "--s2"},
+    {key: "contraction", label: "Contraction", color: "--s3"}, {key: "churn", label: "Churn", color: "--s4"}], usd);
+  stacked("c-commit", last(seg.monthly), [
+    {key: "committed", label: "Committed", color: "--s1"}, {key: "overage", label: "Overage and pay-as-you-go", color: "--s2"}], usd);
+  const billions = v => { const b = v / 100 / 1000; return b >= 100 ? b.toFixed(0) : b.toFixed(1); };
+  const tierSeries = [{key: "Wren", label: "Wren", color: "--s1"}, {key: "Heron", label: "Heron", color: "--s2"}, {key: "Condor", label: "Condor", color: "--s3"}];
+  stacked("c-tokens", last(seg.tokens), tierSeries, billions, {events: M.events});
+  const shares = last(seg.tier_value).map(row => { const t = row.Wren + row.Heron + row.Condor || 1;
+    return {month: row.month, Wren: row.Wren / t, Heron: row.Heron / t, Condor: row.Condor / t}; });
+  stacked("c-mix", shares, tierSeries, pct, {events: M.events, share: true});
+  matrix(seg.tier_movement);
+}
+segmentSelect.addEventListener("change", render);
+$("range").addEventListener("change", render);
+render();
+$("upsell-rule").textContent = M.signals.rules.upsell + ". Rule-based.";
+$("risk-rule").textContent = M.signals.rules.at_risk + ". Rule-based.";
+accountTable("upsell", M.signals.upsell, [["Commit", "commit"], ["Usage", "usage"]]);
+accountTable("risk", M.signals.at_risk, [["Commit", "commit"], ["Usage", "usage"]]);
+</script>
+</body>
+</html>

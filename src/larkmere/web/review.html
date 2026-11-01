@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note Review</title>
+<style>
+:root { color-scheme: light dark; --bg:#f9f9f7; --card:#fcfcfb; --ink:#0b0b0b; --soft:#52514e; --line:#e1e0d9; --accent:#2a78d6; --bad:#d03b3b; --good:#006300; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d0d0d; --card:#1a1a19; --ink:#f0efec; --soft:#c3c2b7; --line:#2c2c2a; --accent:#3987e5; --bad:#e66767; --good:#0ca30c; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+main { max-width:1040px; margin:0 auto; padding:24px 16px 80px; }
+h1 { font-size:24px; margin:0 0 4px; }
+.lede { color:var(--soft); margin:0 0 20px; }
+.who { display:flex; gap:8px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+#reviewer { width:280px; max-width:100%; }
+input, textarea { font:inherit; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:8px; }
+textarea { width:100%; min-height:150px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+.card h2 { font-size:17px; margin:0; }
+.meta { color:var(--soft); font-size:13px; margin:2px 0 12px; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:760px) { .cols { grid-template-columns:1fr; } }
+.transcript { font-size:13px; max-height:280px; overflow:auto; border:1px solid var(--line); border-radius:6px; padding:8px; }
+.transcript div { padding:2px 0; }
+.transcript .warn { background:color-mix(in srgb, var(--bad) 14%, transparent); }
+.flag { color:var(--bad); font-size:14px; margin:4px 0; }
+.ok { color:var(--good); font-size:14px; }
+.notice { font-size:13px; border-left:3px solid var(--accent); padding-left:8px; margin:8px 0; color:var(--soft); }
+button { font:inherit; padding:7px 14px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:inherit; cursor:pointer; }
+button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.actions { display:flex; gap:8px; margin-top:10px; }
+.done { font-weight:600; }
+#finished { position:sticky; bottom:0; background:var(--accent); color:#fff; padding:12px 16px; border-radius:8px; display:none; }
+</style>
+</head>
+<body>
+<main>
+<h1>Review notes before they reach the CRM</h1>
+<p class="lede">Nothing is saved until a named person approves it. Flags come from rule-based checks. They catch invented figures, dates and names, but only you can catch a claim that is simply wrong.</p>
+<div class="who"><label for="reviewer">Your name</label><input id="reviewer" placeholder="Required to approve or reject"></div>
+<div id="list"></div>
+<div id="finished">All notes decided. You can close this page and go back to the terminal.</div>
+</main>
+<script>
+const list = document.getElementById("list");
+const escapeHtml = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function card(d) {
+  const cites = new Set(d.claims.flatMap(c => c.cites));
+  const lines = d.transcript.map(u => {
+    const warn = d.injection_lines.includes(u.n) ? " warn" : "";
+    const mark = cites.has(u.n) ? "&#9656; " : "";
+    return `<div class="${warn}">${mark}<b>${u.n}.</b> ${escapeHtml(u.speaker)}: ${escapeHtml(u.text)}</div>`;
+  }).join("");
+  const flags = d.flags.length
+    ? d.flags.map(f => `<div class="flag">&#9888; ${escapeHtml(f)}</div>`).join("")
+    : `<div class="ok">&#10003; No flags from the rule-based checks</div>`;
+  const notices = [
+    d.fault_injected ? `<div class="notice">Demo: a fault was added to this draft on purpose. It ${escapeHtml(d.fault_injected)}.</div>` : "",
+    d.injection_lines.length ? `<div class="notice">Line ${d.injection_lines.join(", ")} tries to give an AI instructions. It was not acted on.</div>` : "",
+  ].join("");
+  const decided = d.decision
+    ? `<p class="done">${d.decision.decision === "approved" ? "Approved" : "Rejected"} by ${escapeHtml(d.decision.reviewer)}${d.decision.edited ? " (edited)" : ""}</p>`
+    : `<textarea id="text-${d.draft_id}" aria-label="Note text">${escapeHtml(d.text)}</textarea>
+       <div id="flags-${d.draft_id}">${flags}</div>
+       <div class="actions">
+         <button class="primary" onclick="decide('${d.draft_id}','approve')">Approve</button>
+         <button onclick="decide('${d.draft_id}','reject')">Reject</button>
+       </div>`;
+  return `<section class="card">
+    <h2>${escapeHtml(d.meeting)}</h2>
+    <div class="meta">${d.account_id} &middot; From: ${escapeHtml(d.transcript_source)} &middot; Drafted by: ${escapeHtml(d.source)}</div>
+    ${notices}
+    <div class="cols"><div>${decided}</div><div class="transcript" tabindex="0" aria-label="Transcript">${lines}</div></div>
+  </section>`;
+}
+
+async function refresh() {
+  const data = await (await fetch("/api/drafts")).json();
+  // Redrawing must not lose edits in progress on the notes not yet decided.
+  const unsaved = [...list.querySelectorAll("textarea")].map(t => [t.id, t.value]);
+  list.innerHTML = data.drafts.map(card).join("");
+  for (const [id, value] of unsaved) {
+    const box = document.getElementById(id);
+    if (box) box.value = value;
+  }
+  document.getElementById("finished").style.display = data.finished ? "block" : "none";
+}
+
+async function decide(id, action) {
+  const reviewer = document.getElementById("reviewer").value;
+  const text = document.getElementById("text-" + id).value;
+  const response = await fetch("/api/" + action, {method: "POST", body: JSON.stringify({draft_id: id, reviewer, text})});
+  if (!response.ok) {
+    const {error} = await response.json();
+    document.getElementById("flags-" + id).innerHTML = `<div class="flag">&#9888; Not saved: ${escapeHtml(error)}</div>`;
+    return;
+  }
+  refresh();
+}
+refresh();
+</script>
+</body>
+</html>

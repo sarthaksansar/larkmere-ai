@@ -1,0 +1,45 @@
+{
+ "model": "claude-opus-5-5",
+ "recorded_on": "2026-11-01",
+ "response": {
+  "claims": [
+   {
+    "section": "Summary",
+    "text": "Oakhollow Legal renewal is in January. Ivo Pennant said they used about $3,800 of the $6,000 commit last month.",
+    "cites": [
+     1,
+     2
+    ]
+   },
+   {
+    "section": "Summary",
+    "text": "Clause search moved from Heron to the Wren refresh.",
+    "cites": [
+     3,
+     4
+    ]
+   },
+   {
+    "section": "Decisions",
+    "text": "Oakhollow will keep the contract if the commit drops to $4,000.",
+    "cites": [
+     7
+    ]
+   },
+   {
+    "section": "Next steps",
+    "text": "Bram Oyelaran to bring a $4,000 proposal to the December 2 call.",
+    "cites": [
+     8
+    ]
+   },
+   {
+    "section": "Risks",
+    "text": "Ivo fears the line may be cut entirely if spend looks wasted.",
+    "cites": [
+     5
+    ]
+   }
+  ]
+ }
+}

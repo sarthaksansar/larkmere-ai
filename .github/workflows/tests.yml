@@ -1,0 +1,23 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: System packages for Tk, OCR and a virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1 libglib2.0-0 fonts-dejavu-core
+      - run: python -m pip install .[dev]
+      # The end-to-end tests drive the real window with real input, on this throwaway display.
+      - run: xvfb-run --auto-servernum --server-args="-screen 0 1400x900x24" python -m pytest -q

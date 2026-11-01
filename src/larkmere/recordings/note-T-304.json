@@ -1,0 +1,45 @@
+{
+ "model": "claude-opus-5-5",
+ "recorded_on": "2026-11-01",
+ "response": {
+  "claims": [
+   {
+    "section": "Summary",
+    "text": "Rafe Dunmow flagged that the September statement total looks $900 higher than the line items add up to.",
+    "cites": [
+     1,
+     2
+    ]
+   },
+   {
+    "section": "Summary",
+    "text": "Cleo Vantongeren confirmed the discrepancy; billing corrected some usage late in the month.",
+    "cites": [
+     3
+    ]
+   },
+   {
+    "section": "Decisions",
+    "text": "Payment is held until the corrected statement arrives.",
+    "cites": [
+     4,
+     6
+    ]
+   },
+   {
+    "section": "Next steps",
+    "text": "Cleo Vantongeren to send a corrected statement by October 9.",
+    "cites": [
+     5
+    ]
+   },
+   {
+    "section": "Risks",
+    "text": "Unresolved statement is a risk for Pennyroyal's audit next month.",
+    "cites": [
+     4
+    ]
+   }
+  ]
+ }
+}

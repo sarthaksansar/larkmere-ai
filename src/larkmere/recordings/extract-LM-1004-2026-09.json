@@ -1,0 +1,53 @@
+{
+ "model": "claude-opus-5-5",
+ "recorded_on": "2026-11-01",
+ "response": {
+  "account_id": "LM-1004",
+  "period": "2026-09",
+  "pages_total": 2,
+  "line_count_reported": 6,
+  "lines": [
+   {
+    "item": "Wren input",
+    "tokens_m": "3633.36",
+    "rate": "0.40",
+    "amount": "1453.34"
+   },
+   {
+    "item": "Wren output",
+    "tokens_m": "1686.92",
+    "rate": "1.60",
+    "amount": "2699.07"
+   },
+   {
+    "item": "Heron input",
+    "tokens_m": "1737.24",
+    "rate": "2.50",
+    "amount": "4343.10"
+   },
+   {
+    "item": "Heron output",
+    "tokens_m": "806.58",
+    "rate": "10.00",
+    "amount": "8065.80"
+   },
+   {
+    "item": "Condor input",
+    "tokens_m": "361.72",
+    "rate": "12.00",
+    "amount": "4340.64"
+   },
+   {
+    "item": "Condor output",
+    "tokens_m": "167.94",
+    "rate": "48.00",
+    "amount": "8061.12"
+   }
+  ],
+  "usage_total": "29863.07",
+  "monthly_commit": "22000.00",
+  "overage": "6963.07",
+  "unused_commit": "0.00",
+  "total_due": "29863.07"
+ }
+}

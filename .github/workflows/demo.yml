@@ -1,0 +1,37 @@
+name: Demo
+
+# Runs the real demo on a virtual display and publishes the page it produces, so the live
+# demo is the output of an actual run, and no generated output is ever committed.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: sudo apt-get update && sudo apt-get install -y xvfb libgl1 libglib2.0-0 fonts-dejavu-core
+      - run: python -m pip install .
+      - run: xvfb-run --auto-servernum --server-args="-screen 0 1400x900x24" python -m larkmere demo --approve-as "Automated demo run" --yes --no-browser
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out/site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

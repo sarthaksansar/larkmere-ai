@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "larkmere"
+version = "0.1.0"
+description = "Deployment-engineering demo on a fictional AI API vendor: OCR automation of an app with no API, AI extraction with hard checks, reviewed AI notes, and revenue analytics."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "pillow>=10.1",
+    "rapidocr-onnxruntime>=1.2.3",
+    "pyautogui>=0.9.54",
+]
+
+[project.optional-dependencies]
+live = ["anthropic>=1.0"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+larkmere = "larkmere.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"larkmere.web" = ["*.html"]
+larkmere = ["recordings/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "ocr: runs the real OCR engine on rendered images (slower, no display needed)",
+    "gui: drives the real Tk window with real mouse and keyboard input",
+]

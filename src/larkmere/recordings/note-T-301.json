@@ -1,0 +1,51 @@
+{
+ "model": "claude-opus-5-5",
+ "recorded_on": "2026-11-01",
+ "response": {
+  "claims": [
+   {
+    "section": "Summary",
+    "text": "Thistledown Health used about $25,000 in September against a monthly commit of $18,000; finance noticed the overage.",
+    "cites": [
+     2,
+     3
+    ]
+   },
+   {
+    "section": "Summary",
+    "text": "The new triage assistant moved work onto Condor and that volume is staying.",
+    "cites": [
+     4
+    ]
+   },
+   {
+    "section": "Decisions",
+    "text": "Nell Harbottle: $24,000 a month is the most they can commit this year.",
+    "cites": [
+     6
+    ]
+   },
+   {
+    "section": "Next steps",
+    "text": "Ada Thornquist to send retention terms to the security team by October 13.",
+    "cites": [
+     9
+    ]
+   },
+   {
+    "section": "Next steps",
+    "text": "Ada Thornquist to send a revised order form by October 20.",
+    "cites": [
+     7
+    ]
+   },
+   {
+    "section": "Risks",
+    "text": "Security team is concerned about data retention and needs updated terms first.",
+    "cites": [
+     8
+    ]
+   }
+  ]
+ }
+}
